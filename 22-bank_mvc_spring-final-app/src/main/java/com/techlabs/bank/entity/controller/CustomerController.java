@@ -1,0 +1,55 @@
+package com.techlabs.bank.entity.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.techlabs.bank.entity.dto.CustomerDto;
+import com.techlabs.bank.entity.dto.TransactionDto;
+import com.techlabs.bank.service.CustomerService;
+import com.techlabs.bank.service.TransactionService;
+
+@RestController
+@RequestMapping("/customer")
+public class CustomerController {
+	
+	@Autowired
+    private CustomerService customerService;
+    @Autowired
+    private TransactionService transactionService;
+
+    @GetMapping("/getprofile/{customerId}")
+    public ResponseEntity<CustomerDto> getProfile(@PathVariable int customerId) {
+        CustomerDto customer = customerService.getCustomerById(customerId);
+        return new ResponseEntity<>(customer, HttpStatus.OK);
+    }
+
+    @PutMapping("/editprofile/{customerId}")
+    public ResponseEntity<CustomerDto> updateProfile(@PathVariable int customerId, @RequestBody CustomerDto customerDto) {
+        CustomerDto updatedCustomer = customerService.updateCustomer(customerId, customerDto);
+        return new ResponseEntity<>(updatedCustomer, HttpStatus.OK);
+    }
+
+    @GetMapping("/accounts/{accountId}/viewpassbook")
+    public ResponseEntity<List<TransactionDto>> getPassbook(@PathVariable int accountId) {
+        List<TransactionDto> transactions = transactionService.getPassbook(accountId);
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+
+    @PostMapping("/accounts/{accountId}/newtransactions")
+    public ResponseEntity<TransactionDto> createTransaction(@PathVariable int accountId, @RequestBody TransactionDto transactionDto) {
+        transactionDto.setAccountId(accountId);
+        TransactionDto createdTransaction = transactionService.createTransaction(transactionDto);
+        return new ResponseEntity<>(createdTransaction, HttpStatus.CREATED);
+    }
+
+}

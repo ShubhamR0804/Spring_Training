@@ -1,0 +1,5 @@
+package com.techlabs.bank.entity.dto;
+
+public class PageResponse {
+
+}

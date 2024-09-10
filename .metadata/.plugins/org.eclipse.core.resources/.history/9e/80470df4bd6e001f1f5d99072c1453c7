@@ -1,0 +1,8 @@
+package com.techlabs.bank.entity;
+
+public enum StatusType {
+	
+	ACTIVE,
+	INACTIVE
+
+}

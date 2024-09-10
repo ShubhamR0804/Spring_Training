@@ -1,0 +1,87 @@
+package com.techlabs.bank.entity.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.techlabs.bank.entity.dto.CustomerDto;
+import com.techlabs.bank.entity.dto.TransactionDto;
+import com.techlabs.bank.service.CustomerService;
+import com.techlabs.bank.service.TransactionService;
+
+@RestController
+@RequestMapping("/customer")
+public class CustomerController {
+	
+	@Autowired
+    private CustomerService customerService;
+    @Autowired
+    private TransactionService transactionService;
+    
+ // Retrieve currently logged-in user's customerId (assuming the customerId is the username or is stored in user details)
+//    private int getLoggedInCustomerId() {
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        String username = authentication.getName(); // This would typically be the customer's username (email or customerId)
+//        // Assuming the customerId is stored as a username, convert it to integer.
+//        // If customerId is stored in UserDetails, cast the principal to UserDetails and fetch it
+//        System.out.println(username+"1");
+//        return Integer.parseInt(username); 
+//    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/profile/{customerId}")
+    public ResponseEntity<CustomerDto> getProfile(@PathVariable int customerId) {
+//    	int loggedInCustomerId = getLoggedInCustomerId();
+//    	System.out.println(loggedInCustomerId+"2");
+//        if (loggedInCustomerId != customerId) {
+//            return new ResponseEntity<>(HttpStatus.FORBIDDEN); // Return forbidden if trying to access another customer's profile
+//        }
+        CustomerDto customer = customerService.getCustomerById(customerId);
+        System.out.println(customer+"3");
+        return new ResponseEntity<>(customer, HttpStatus.OK);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PutMapping("/profile/{customerId}")
+    public ResponseEntity<CustomerDto> updateProfile(@PathVariable int customerId, @RequestBody CustomerDto customerDto) {
+//    	int loggedInCustomerId = getLoggedInCustomerId();
+//        if (loggedInCustomerId != customerId) {
+//            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+//        }
+        CustomerDto updatedCustomer = customerService.updateCustomer(customerId, customerDto);
+        return new ResponseEntity<>(updatedCustomer, HttpStatus.OK);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/accounts/{accountId}/viewpassbook")
+    public ResponseEntity<List<TransactionDto>> getPassbook(@PathVariable int accountId) {
+//    	int loggedInCustomerId = getLoggedInCustomerId();
+//        // Check if the account belongs to the logged-in customer
+//        if (!customerService.doesAccountBelongToCustomer(accountId, loggedInCustomerId)) {
+//            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+//        }
+        List<TransactionDto> transactions = transactionService.getPassbook(accountId);
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
+    }
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PostMapping("/accounts/{accountId}/newtransactions")
+    public ResponseEntity<TransactionDto> createTransaction(@PathVariable int accountId, @RequestBody TransactionDto transactionDto) {
+//    	int loggedInCustomerId = getLoggedInCustomerId();
+//        if (!customerService.doesAccountBelongToCustomer(accountId, loggedInCustomerId)) {
+//            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+//        }
+        transactionDto.setAccountId(accountId);
+        TransactionDto createdTransaction = transactionService.createTransaction(transactionDto);
+        return new ResponseEntity<>(createdTransaction, HttpStatus.CREATED);
+    }
+
+}

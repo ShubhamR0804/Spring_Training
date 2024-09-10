@@ -1,0 +1,131 @@
+package com.techlabs.bank.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.techlabs.bank.entity.Accounts;
+import com.techlabs.bank.entity.Customers;
+import com.techlabs.bank.entity.Transactions;
+import com.techlabs.bank.entity.dto.AccountDto;
+import com.techlabs.bank.entity.dto.CustomerDto;
+import com.techlabs.bank.entity.dto.TransactionDto;
+import com.techlabs.bank.exception.ResourceNotFoundException;
+import com.techlabs.bank.repository.AccountRepository;
+import com.techlabs.bank.repository.CustomerRepository;
+import com.techlabs.bank.repository.TransactionRepository;
+
+@Service
+public class CustomerServiceImpl implements CustomerService {
+
+	@Autowired
+	private CustomerRepository customerRepository;
+	@Autowired
+	private AccountRepository accountRepository;
+	@Autowired
+	private TransactionRepository transactionRepository;
+	
+
+	public CustomerDto addCustomer(CustomerDto customerDto) {
+		Customers customer = new Customers();
+		// map dto fields to entity
+		customer.setFirstName(customerDto.getFirstName());
+		customer.setLastName(customerDto.getLastName());
+		customer.setEmail(customerDto.getEmail());
+		customer.setPhone(customerDto.getPhone());
+		customer.setAddress(customerDto.getAddress());
+		// save customer
+		customer = customerRepository.save(customer);
+		return toDto(customer);
+	}
+
+	public List<CustomerDto> getAllCustomers() {
+		List<Customers> customers = customerRepository.findAll();
+		return customers.stream().map(this::toDto).collect(Collectors.toList());
+	}
+
+	public CustomerDto getCustomerById(int customerId) {
+		Customers customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+		return toDto(customer);
+	}
+
+	public CustomerDto updateCustomer(int customerId, CustomerDto customerDto) {
+		Customers customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+		// update fields
+		customer.setFirstName(customerDto.getFirstName());
+		customer.setLastName(customerDto.getLastName());
+		customer.setEmail(customerDto.getEmail());
+		customer.setPhone(customerDto.getPhone());
+		customer.setAddress(customerDto.getAddress());
+		// save updated customer
+		customer = customerRepository.save(customer);
+		return toDto(customer);
+	}
+
+	public AccountDto addAccount(int customerId, AccountDto accountDto) {
+		Customers customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+		Accounts account = new Accounts();
+		// map dto fields to entity
+		account.setAccountNumber(accountDto.getAccountNumber());
+		account.setAccountType(accountDto.getAccountType());
+		account.setBalance(accountDto.getBalance());
+		account.setCustomer(customer);
+		// save account
+		account = accountRepository.save(account);
+		return toDto(account);
+	}
+
+	public List<TransactionDto> getAllTransactions() {
+		List<Transactions> transactions = transactionRepository.findAll();
+		return transactions.stream().map(this::toDto).collect(Collectors.toList());
+	}
+	
+	public boolean doesAccountBelongToCustomer(int accountId, int customerId) {
+	    Accounts account = accountRepository.findById(accountId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+	    return account.getCustomer().getCustomerId() == customerId;
+	}
+
+	private CustomerDto toDto(Customers customer) {
+		CustomerDto dto = new CustomerDto();
+		// map entity fields to dto
+		dto.setCustomerId(customer.getCustomerId());
+		dto.setFirstName(customer.getFirstName());
+		dto.setLastName(customer.getLastName());
+		dto.setEmail(customer.getEmail());
+		dto.setPhone(customer.getPhone());
+		dto.setAddress(customer.getAddress());
+		//dto.setAccounts(customer.getAccounts().stream().map(this::toDto).collect(Collectors.toList()));
+		if (customer.getAccounts() != null && !customer.getAccounts().isEmpty()) {
+	        dto.setAccounts(customer.getAccounts().stream().map(this::toDto).collect(Collectors.toList()));
+	    } else {
+	        dto.setAccounts(new ArrayList<>());
+	    }
+		return dto;
+	}
+
+	private AccountDto toDto(Accounts account) {
+		AccountDto dto = new AccountDto();
+		dto.setAccountId(account.getAccountId());
+		dto.setAccountNumber(account.getAccountNumber());
+		dto.setAccountType(account.getAccountType());
+		dto.setBalance(account.getBalance());
+		return dto;
+	}
+
+	private TransactionDto toDto(Transactions transaction) {
+		TransactionDto dto = new TransactionDto();
+		dto.setTransactionId(transaction.getTransactionId());
+		dto.setTransactionType(transaction.getTransactionType());
+		dto.setAmount(transaction.getAmount());
+		dto.setDescription(transaction.getDescription());
+		dto.setAccountId(transaction.getAccount().getAccountId());
+		return dto;
+	}
+}
